@@ -9,8 +9,7 @@
 	{
 		private readonly string _schema;
 		private readonly string[] _arguments;
-		private Dictionary<string, ArgNameValuePair> _argNameValuePairs;
-
+		private readonly Dictionary<string, ArgNameValuePair> _argNameValuePairs;
 
 		public Args(string schema, string[] arguments)
 		{
@@ -28,15 +27,37 @@
 
 		public TValue GetValue<TValue>(string argName)
 		{
-			var type = typeof (TValue);
+			var valueTypePair = GetValueTypePair<TValue>(argName);
+			return (TValue)Convert.ChangeType(valueTypePair.Value, valueTypePair.Type);
+		}
+
+		private ValueTypePair GetValueTypePair<TValue>(string argName)
+		{
+			if (!_argNameValuePairs.Keys.Contains(argName))
+			{
+				return new ValueTypePair("false", typeof(bool));
+			}
+
 			var val = _argNameValuePairs[argName].Value;
 			if (val == null)
 			{
-				type = typeof(bool);
-				val = "true";
+				return new ValueTypePair("true", typeof(bool));
 			}
 
-			return (TValue)Convert.ChangeType(val, type);
+			return new ValueTypePair(val, typeof(TValue));
 		}
+	}
+
+	public class ValueTypePair
+	{
+		public ValueTypePair(string value, Type type)
+		{
+			Value = value;
+			Type = type;
+		}
+
+		public string Value { get; private set; }
+
+		public Type Type { get; private set; }
 	}
 }
